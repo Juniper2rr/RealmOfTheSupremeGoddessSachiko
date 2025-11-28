@@ -138,10 +138,10 @@ module.exports = {
                 ? Array.from(generalChannel.permissionOverwrites.cache.values())
                 : [];
 
-            let confinementChannel = guild.channels.cache.find(ch => ch.name === 'confinement');
+            let confinementChannel = guild.channels.cache.find(ch => ch.name === '「✦confinement✦」');
             if (!confinementChannel) {
                 confinementChannel = await guild.channels.create({
-                    name: 'confinement',
+                    name: '「✦confinement✦」',
                     type: 0,
                     parent: generalChannel?.parent,
                     permissionOverwrites: permissionOverwrites

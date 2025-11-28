@@ -293,10 +293,10 @@ module.exports = {
                 ? Array.from(generalChannel.permissionOverwrites.cache.values())
                 : [];
 
-            let positivityChannel = guild.channels.cache.find(ch => ch.name === 'positive-affirmations');
+            let positivityChannel = guild.channels.cache.find(ch => ch.name === '「✦positive-affirmations✦」');
             if (!positivityChannel) {
                 positivityChannel = await guild.channels.create({
-                    name: 'positive-affirmations',
+                    name: '「✦positive-affirmations✦」',
                     type: 0,
                     parent: generalChannel?.parent,
                     permissionOverwrites: permissionOverwrites

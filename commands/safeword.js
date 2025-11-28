@@ -32,6 +32,7 @@ module.exports = {
                 const punishments = interaction.client.punishments;
                 const positivityTasks = interaction.client.positivityTasks;
                 const squabbles = interaction.client.squabbles;
+                const prisons = interaction.client.prisons;
 
                 let releasedFrom = [];
 
@@ -114,13 +115,46 @@ module.exports = {
                     releasedFrom.push('squabble');
                 }
 
+                // Check prison
+                if (prisons.has(user.id)) {
+                    const prisonData = prisons.get(user.id);
+                    
+                    // Clear the timeout
+                    if (prisonData.timeoutId) {
+                        clearTimeout(prisonData.timeoutId);
+                    }
+                    
+                    // Restore all hidden channels
+                    if (prisonData.hiddenChannels && prisonData.hiddenChannels.length > 0) {
+                        for (const channelId of prisonData.hiddenChannels) {
+                            const channel = interaction.guild.channels.cache.get(channelId);
+                            if (channel) {
+                                try {
+                                    await channel.permissionOverwrites.delete(user.id);
+                                } catch (err) {
+                                    console.error(`Could not restore channel:`, err.message);
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Notify in confinement channel
+                    const confinementChannel = interaction.guild.channels.cache.get(prisonData.channelId);
+                    if (confinementChannel) {
+                        await confinementChannel.send(`🛑 ${user} has used their safeword and has been released from confinement.`);
+                    }
+                    
+                    prisons.delete(user.id);
+                    releasedFrom.push('prison');
+                }
+
                 // Activate safeword protection
                 safewords.set(user.id, {
                     startedAt: Date.now(),
                     guildId: interaction.guild.id
                 });
 
-                let message = `🛑 **SAFEWORD ACTIVATED**\n\n${user}, you are now protected. All active punishments have been ended and you cannot be punished until you use \`/safeword end\`.`;
+                let message = `🛑 **SAFEWORD ACTIVATED**\n\n${user}, you are now protected. All active punishments have been ended and you cannot be punished until you use \`/sw action:End\`.`;
                 
                 if (releasedFrom.length > 0) {
                     message += `\n\n✅ Released from: ${releasedFrom.join(', ')}`;

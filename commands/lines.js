@@ -137,7 +137,7 @@ module.exports = {
             const guild = interaction.guild;
 
             // Create or fetch "lines" channel first
-            let linesChannel = guild.channels.cache.find(ch => ch.name === 'lines');
+            let linesChannel = guild.channels.cache.find(ch => ch.name === '「✦lines✦」');
             if (!linesChannel) {
                 console.log('Creating new lines channel...');
                 
@@ -151,7 +151,7 @@ module.exports = {
                     : [];
                 
                 linesChannel = await guild.channels.create({
-                    name: 'lines',
+                    name: '「✦lines✦」',
                     type: 0,
                     parent: generalChannel?.parent, // Put it in the same category as general
                     permissionOverwrites: permissionOverwrites // Copy same permissions

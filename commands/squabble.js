@@ -174,10 +174,10 @@ module.exports = {
                 ? Array.from(generalChannel.permissionOverwrites.cache.values())
                 : [];
 
-            let makeUpChannel = guild.channels.cache.find(ch => ch.name === 'make-up');
+            let makeUpChannel = guild.channels.cache.find(ch => ch.name === '「✦make-up✦」');
             if (!makeUpChannel) {
                 makeUpChannel = await guild.channels.create({
-                    name: 'make-up',
+                    name: '「✦make-up✦」',
                     type: 0,
                     parent: generalChannel?.parent,
                     permissionOverwrites: permissionOverwrites

@@ -36,6 +36,9 @@ client.squabbles = new Map();
 // Create a map to store safeword protections
 client.safewords = new Map();
 
+// Create a map to store prison confinements
+client.prisons = new Map();
+
 // Load command files
 const commandsPath = path.join(__dirname, 'commands');
 
