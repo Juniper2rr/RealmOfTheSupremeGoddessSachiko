@@ -186,12 +186,14 @@ module.exports = {
                 .setRequired(true))
         .addStringOption(option =>
             option.setName('interval')
-                .setDescription('How often to post (e.g., 1h, 30m)')
+                .setDescription('Time of freedom between affirmations (e.g., 1h, 30m, 5m)')
                 .setRequired(true))
-        .addStringOption(option =>
-            option.setName('duration')
-                .setDescription('How long the task lasts (e.g., 5h, 90m)')
-                .setRequired(true)),
+        .addIntegerOption(option =>
+            option.setName('amount')
+                .setDescription('Total number of affirmations to complete (e.g., 30)')
+                .setRequired(true)
+                .setMinValue(1)
+                .setMaxValue(100)),
     
     async execute(interaction) {
         try {
@@ -199,7 +201,7 @@ module.exports = {
             const user = interaction.options.getUser('user');
             const targetMember = await interaction.guild.members.fetch(user.id);
             const intervalStr = interaction.options.getString('interval');
-            const durationStr = interaction.options.getString('duration');
+            const amount = interaction.options.getInteger('amount');
 
             // Load config to get punisher role
             const config = loadConfig();
@@ -247,13 +249,12 @@ module.exports = {
                 });
             }
 
-            // Parse time values
+            // Parse time value
             const interval = parseTime(intervalStr);
-            const duration = parseTime(durationStr);
 
-            if (!interval || !duration) {
+            if (!interval) {
                 return await interaction.reply({ 
-                    content: 'Invalid time format! Use format like: 1h, 30m, 2h, etc.', 
+                    content: 'Invalid time format! Use format like: 1h, 30m, 5m, etc.', 
                     ephemeral: true 
                 });
             }
@@ -261,13 +262,6 @@ module.exports = {
             if (interval < 60000) {
                 return await interaction.reply({ 
                     content: 'Interval must be at least 1 minute!', 
-                    ephemeral: true 
-                });
-            }
-
-            if (duration < interval) {
-                return await interaction.reply({ 
-                    content: 'Duration must be longer than interval!', 
                     ephemeral: true 
                 });
             }
@@ -311,27 +305,22 @@ module.exports = {
             const imageBuffer = createTextImage(randomizedText);
             const attachment = new AttachmentBuilder(imageBuffer, { name: 'affirmation.png' });
 
-            // Calculate total posts
-            const totalPosts = Math.floor(duration / interval);
-
             // Store task info
-            const endTime = Date.now() + duration;
             positivityTasks.set(user.id, {
                 channelId: positivityChannel.id,
                 interval: interval,
-                endTime: endTime,
                 currentAffirmation: randomizedText,
-                lastAffirmationBase: affirmation, // Store base text for comparison
-                postsRemaining: totalPosts,
-                totalPosts: totalPosts,
+                lastAffirmationBase: affirmation,
+                postsRemaining: amount,
+                totalPosts: amount,
                 punisherId: punisher.id,
-                timeoutId: null, // Use timeout instead of interval
-                hiddenChannels: [], // Store hidden channels
-                isLocked: false // Track if user is currently locked
+                timeoutId: null,
+                hiddenChannels: [],
+                isLocked: false
             });
 
             await interaction.reply({ 
-                content: `✅ ${user} has been assigned a positivity task!\n📍 Every ${formatTime(interval)} for ${formatTime(duration)} (${totalPosts} affirmations total)\n📺 Check <#${positivityChannel.id}>`, 
+                content: `✅ ${user} has been assigned a positivity task!\n📍 ${amount} affirmations total\n⏰ ${formatTime(interval)} of freedom after each completion\n📺 Check <#${positivityChannel.id}>`, 
                 ephemeral: false 
             });
 
@@ -340,7 +329,7 @@ module.exports = {
 
             // Post first affirmation
             await positivityChannel.send({
-                content: `${user}, time for your positive affirmation! 💖\n\n**Affirmation 1/${totalPosts}:** Type this exactly:`,
+                content: `${user}, time for your positive affirmation! 💖\n\n**Affirmation 1/${amount}:** Type this exactly:`,
                 files: [attachment]
             });
 

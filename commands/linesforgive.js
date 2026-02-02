@@ -49,20 +49,6 @@ module.exports = {
             const punishment = punishments.get(user.id);
             const guild = interaction.guild;
 
-            // Restore access to all hidden channels
-            if (punishment.hiddenChannels && punishment.hiddenChannels.length > 0) {
-                for (const channelId of punishment.hiddenChannels) {
-                    const channel = guild.channels.cache.get(channelId);
-                    if (channel) {
-                        try {
-                            await channel.permissionOverwrites.delete(user.id);
-                        } catch (err) {
-                            console.error(`Could not restore channel ${channel.name}:`, err.message);
-                        }
-                    }
-                }
-            }
-
             // Send message to lines channel
             const linesChannel = guild.channels.cache.get(punishment.channelId);
             if (linesChannel) {
@@ -72,6 +58,9 @@ module.exports = {
                     console.error('Could not send to lines channel:', err.message);
                 }
             }
+            
+
+            
 
             // Remove punishment
             punishments.delete(user.id);

@@ -27,17 +27,8 @@ client.commands = new Collection();
 // Create a map to store punishments (shared across files)
 client.punishments = new Map();
 
-// Create a map to store positivity tasks
-client.positivityTasks = new Map();
-
-// Create a map to store squabbles
-client.squabbles = new Map();
-
 // Create a map to store safeword protections
 client.safewords = new Map();
-
-// Create a map to store prison confinements
-client.prisons = new Map();
 
 // Load command files
 const commandsPath = path.join(__dirname, 'commands');
@@ -67,8 +58,9 @@ if (!fs.existsSync(commandsPath)) {
     }
 }
 
-// Load event files
+// Load event files (only the ones we want)
 const eventsPath = path.join(__dirname, 'events');
+const allowedEvents = ['ready.js', 'interactionCreate.js', 'messageCreate.js'];
 
 // Check if events folder exists
 if (!fs.existsSync(eventsPath)) {
@@ -83,6 +75,12 @@ if (!fs.existsSync(eventsPath)) {
     }
 
     for (const file of eventFiles) {
+        // Skip files not in the allowed list
+        if (!allowedEvents.includes(file)) {
+            console.log(`⏭️  Skipping event: ${file}`);
+            continue;
+        }
+
         const filePath = path.join(eventsPath, file);
         const event = require(filePath);
         

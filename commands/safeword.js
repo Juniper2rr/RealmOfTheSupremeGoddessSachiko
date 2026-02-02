@@ -30,9 +30,6 @@ module.exports = {
 
                 // End all active punishments for this user
                 const punishments = interaction.client.punishments;
-                const positivityTasks = interaction.client.positivityTasks;
-                const squabbles = interaction.client.squabbles;
-                const prisons = interaction.client.prisons;
 
                 let releasedFrom = [];
 
@@ -40,112 +37,8 @@ module.exports = {
                 if (punishments.has(user.id)) {
                     const punishment = punishments.get(user.id);
                     
-                    // Restore all hidden channels
-                    if (punishment.hiddenChannels && punishment.hiddenChannels.length > 0) {
-                        for (const channelId of punishment.hiddenChannels) {
-                            const channel = interaction.guild.channels.cache.get(channelId);
-                            if (channel) {
-                                try {
-                                    await channel.permissionOverwrites.delete(user.id);
-                                } catch (err) {
-                                    console.error(`Could not restore channel:`, err.message);
-                                }
-                            }
-                        }
-                    }
-                    
                     punishments.delete(user.id);
                     releasedFrom.push('lines');
-                }
-
-                // Check positivity task
-                if (positivityTasks.has(user.id)) {
-                    const task = positivityTasks.get(user.id);
-                    
-                    // Clear timeout
-                    if (task.timeoutId) {
-                        clearTimeout(task.timeoutId);
-                    }
-                    
-                    // Restore channels if locked
-                    if (task.isLocked && task.hiddenChannels) {
-                        for (const channelId of task.hiddenChannels) {
-                            const channel = interaction.guild.channels.cache.get(channelId);
-                            if (channel) {
-                                try {
-                                    await channel.permissionOverwrites.delete(user.id);
-                                } catch (err) {
-                                    console.error(`Could not restore channel:`, err.message);
-                                }
-                            }
-                        }
-                    }
-                    
-                    positivityTasks.delete(user.id);
-                    releasedFrom.push('positivity');
-                }
-
-                // Check squabble
-                if (squabbles.has(user.id)) {
-                    const squabble = squabbles.get(user.id);
-                    const partnerId = squabble.partnerId;
-                    
-                    // Restore channels
-                    if (squabble.hiddenChannels && squabble.hiddenChannels.length > 0) {
-                        for (const channelId of squabble.hiddenChannels) {
-                            const channel = interaction.guild.channels.cache.get(channelId);
-                            if (channel) {
-                                try {
-                                    await channel.permissionOverwrites.delete(user.id);
-                                } catch (err) {
-                                    console.error(`Could not restore channel:`, err.message);
-                                }
-                            }
-                        }
-                    }
-                    
-                    // Notify partner
-                    const partner = await interaction.client.users.fetch(partnerId);
-                    const makeUpChannel = interaction.guild.channels.cache.get(squabble.channelId);
-                    if (makeUpChannel) {
-                        await makeUpChannel.send(`🛑 ${user} has used their safeword. ${partner}, you may continue or use your safeword as well.`);
-                    }
-                    
-                    squabbles.delete(user.id);
-                    releasedFrom.push('squabble');
-                }
-
-                // Check prison
-                if (prisons.has(user.id)) {
-                    const prisonData = prisons.get(user.id);
-                    
-                    // Clear the timeout
-                    if (prisonData.timeoutId) {
-                        clearTimeout(prisonData.timeoutId);
-                    }
-                    
-                    // Restore all hidden channels
-                    if (prisonData.hiddenChannels && prisonData.hiddenChannels.length > 0) {
-                        for (const channelId of prisonData.hiddenChannels) {
-                            const channel = interaction.guild.channels.cache.get(channelId);
-                            if (channel) {
-                                try {
-                                    await channel.permissionOverwrites.delete(user.id);
-                                } catch (err) {
-                                    console.error(`Could not restore channel:`, err.message);
-                                }
-                            }
-                        }
-                    }
-                    
-                    // Notify in confinement channel
-                    const confinementChannel = interaction.guild.channels.cache.get(prisonData.channelId);
-                    if (confinementChannel) {
-                        await confinementChannel.send(`🛑 ${user} has used their safeword and has been released from confinement.`);
-                    }
-                    
-                    prisons.delete(user.id);
-                    releasedFrom.push('prison');
                 }
 
                 // Activate safeword protection

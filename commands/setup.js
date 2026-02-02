@@ -40,20 +40,52 @@ module.exports = {
             option.setName('punisher_role')
                 .setDescription('Role that can punish others')
                 .setRequired(true))
+        .addChannelOption(option =>
+            option.setName('lines_channel')
+                .setDescription('Channel where lines punishments will be posted')
+                .setRequired(true))
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
     
     async execute(interaction) {
         try {
-            // Check if user is server owner
-            if (interaction.user.id !== interaction.guild.ownerId) {
+            // Check if command is used in a guild using guildId
+            if (!interaction.guildId) {
                 return await interaction.reply({ 
-                    content: 'Only the server owner can use this command!', 
+                    content: '❌ This command can only be used in a server!', 
+                    ephemeral: true 
+                });
+            }
+
+            // Fetch the guild manually if it's not cached
+            let guild = interaction.guild;
+            if (!guild) {
+                guild = await interaction.client.guilds.fetch(interaction.guildId);
+            }
+
+            // Ensure guild has ownerId
+            if (!guild.ownerId) {
+                await guild.fetch();
+            }
+
+            // Check if user is server owner
+            if (interaction.user.id !== guild.ownerId) {
+                return await interaction.reply({ 
+                    content: '❌ Only the server owner can use this command!', 
                     ephemeral: true 
                 });
             }
 
             const role = interaction.options.getRole('punisher_role');
-            const guildId = interaction.guild.id;
+            const channel = interaction.options.getChannel('lines_channel');
+            const guildId = guild.id;
+
+            // Validate channel is a text channel
+            if (channel.type !== 0) {
+                return await interaction.reply({
+                    content: '❌ Please select a text channel for lines punishments.',
+                    ephemeral: true
+                });
+            }
 
             // Load existing config
             const config = loadConfig();
@@ -63,21 +95,26 @@ module.exports = {
                 config[guildId] = {};
             }
             config[guildId].punisherRoleId = role.id;
+            config[guildId].linesChannelId = channel.id;
 
             // Save config
             saveConfig(config);
 
             await interaction.reply({
-                content: `✅ Setup complete! Users with the ${role} role can now punish users without that role.`,
+                content: `✅ Setup complete!\n• Punisher Role: ${role}\n• Lines Channel: ${channel}\n\nUsers with the punisher role can now punish anyone, including each other.`,
                 ephemeral: false
             });
 
         } catch (err) {
             console.error('Error in setup command:', err);
-            await interaction.reply({ 
-                content: 'An error occurred during setup.', 
-                ephemeral: true 
-            });
+            
+            // Handle case where interaction hasn't been replied to yet
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.reply({ 
+                    content: '❌ An error occurred during setup. Please try again.', 
+                    ephemeral: true 
+                }).catch(console.error);
+            }
         }
     },
 };
