@@ -184,10 +184,19 @@ module.exports = {
             
         } catch (err) {
             console.error('Error in lines command:', err);
-            await interaction.reply({ 
-                content: 'An error occurred while setting up the punishment.', 
+            
+            const errorResponse = { 
+                content: `An error occurred: ${err.message}. Please check if I have "View Channel" and "Send Messages" permissions in the lines channel.`, 
                 ephemeral: true 
-            });
+            };
+
+            // If we already replied to the user (at Line 176), we must use followUp
+            if (interaction.replied || interaction.deferred) {
+                await interaction.followUp(errorResponse).catch(console.error);
+            } else {
+                await interaction.reply(errorResponse).catch(console.error);
+            }
         }
+        
     },
 };
