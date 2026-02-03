@@ -16,7 +16,6 @@ module.exports = {
             const user = interaction.options.getUser('user');
             const punishments = interaction.client.punishments;
 
-            // Load config to get punisher role
             const config = loadConfig();
             const guildConfig = config[interaction.guild.id];
 
@@ -29,7 +28,6 @@ module.exports = {
 
             const punisherRoleId = guildConfig.punisherRoleId;
 
-            // Check if punisher has the required role
             if (!punisher.roles.cache.has(punisherRoleId)) {
                 return await interaction.reply({ 
                     content: `You need the <@&${punisherRoleId}> role to use this command!`, 
@@ -37,7 +35,6 @@ module.exports = {
                 });
             }
 
-            // Check if user has an active punishment
             if (!punishments.has(user.id)) {
                 return await interaction.reply({ 
                     content: `${user} doesn't have an active punishment.`, 
@@ -48,7 +45,6 @@ module.exports = {
             const punishment = punishments.get(user.id);
             const guild = interaction.guild;
 
-            // Send message to lines channel
             const linesChannel = guild.channels.cache.get(punishment.channelId);
             if (linesChannel) {
                 try {
@@ -58,7 +54,6 @@ module.exports = {
                 }
             }
             
-            // Remove punishment
             punishments.delete(user.id);
 
             await interaction.reply({ 
