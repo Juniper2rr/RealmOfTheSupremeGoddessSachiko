@@ -14,7 +14,6 @@ module.exports = {
         try {
             const punisher = interaction.member;
             const user = interaction.options.getUser('user');
-            const targetMember = await interaction.guild.members.fetch(user.id);
             const punishments = interaction.client.punishments;
 
             // Load config to get punisher role
@@ -23,7 +22,7 @@ module.exports = {
 
             if (!guildConfig || !guildConfig.punisherRoleId) {
                 return await interaction.reply({ 
-                    content: 'This server has not been set up yet! Ask the server owner to run `/setup` first.', 
+                    content: 'This server has not been set up yet!', 
                     ephemeral: true 
                 });
             }
@@ -59,9 +58,6 @@ module.exports = {
                 }
             }
             
-
-            
-
             // Remove punishment
             punishments.delete(user.id);
 
