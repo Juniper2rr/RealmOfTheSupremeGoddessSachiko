@@ -136,68 +136,24 @@ module.exports = {
 
             const guild = interaction.guild;
 
-            // Create or fetch "lines" channel first
-            let linesChannel = guild.channels.cache.find(ch => ch.name === 'lines');
-            if (!linesChannel) {
-                console.log('Creating new lines channel...');
-                
-                // Find general chat to copy permissions from
-                const generalChannel = guild.channels.cache.find(ch => 
-                    ch.name === 'general' || ch.name === 'general-chat' || ch.type === 0
-                );
-                
-                const permissionOverwrites = generalChannel 
-                    ? Array.from(generalChannel.permissionOverwrites.cache.values())
-                    : [];
-                
-                linesChannel = await guild.channels.create({
-                    name: 'lines',
-                    type: 0,
-                    parent: generalChannel?.parent, // Put it in the same category as general
-                    permissionOverwrites: permissionOverwrites // Copy same permissions
+            // Load config to get the lines channel
+            if (!guildConfig.linesChannelId) {
+                return await interaction.reply({ 
+                    content: 'Lines channel has not been configured! Ask the server owner to run `/setup` and specify a lines channel.', 
+                    ephemeral: true 
                 });
-                console.log(`Lines channel created: ${linesChannel.id}`);
-            } else {
-                console.log(`Found existing lines channel: ${linesChannel.id}`);
             }
 
-            // Hide all other channels from the user (except lines)
-            // Only hide text and voice channels, NOT categories (type 4)
-            const channels = guild.channels.cache.filter(ch => 
-                ch.type === 0 || ch.type === 2 // Text (0) and Voice (2) only, no categories
-            );
-            
-            console.log(`Total channels to check: ${channels.size}`);
-            console.log(`Lines channel ID to preserve: ${linesChannel.id}`);
-            
-            const hiddenChannels = [];
-            for (const [id, channel] of channels) {
-                console.log(`Checking channel: ${channel.name} (${channel.id})`);
-                console.log(`  Is it lines channel? ${channel.id === linesChannel.id}`);
-                
-                if (channel.id !== linesChannel.id) { // Don't hide the lines channel
-                    try {
-                        // Check if user can currently see this channel
-                        const permissions = channel.permissionsFor(user);
-                        console.log(`  User can view? ${permissions && permissions.has(PermissionFlagsBits.ViewChannel)}`);
-                        
-                        if (permissions && permissions.has(PermissionFlagsBits.ViewChannel)) {
-                            await channel.permissionOverwrites.edit(user.id, { 
-                                ViewChannel: false 
-                            });
-                            hiddenChannels.push(id);
-                            console.log(`  ✅ Hidden channel: ${channel.name}`);
-                        }
-                    } catch (err) {
-                        console.error(`  ❌ Could not hide channel ${channel.name}:`, err.message);
-                    }
-                } else {
-                    console.log(`  ⏭️ Skipping lines channel (will stay visible)`);
-                }
+            // Get the configured lines channel
+            const linesChannel = guild.channels.cache.get(guildConfig.linesChannelId);
+            if (!linesChannel) {
+                return await interaction.reply({ 
+                    content: 'The configured lines channel no longer exists! Ask the server owner to run `/setup` again.', 
+                    ephemeral: true 
+                });
             }
-            
-            console.log(`Total channels hidden: ${hiddenChannels.length}`);
-            console.log(`Lines channel should still be visible!`);
+
+            console.log(`Using configured lines channel: ${linesChannel.id}`);
 
             const randomizedLine = randomCase(messageText);
 
@@ -207,8 +163,8 @@ module.exports = {
                 message: messageText,
                 currentLine: randomizedLine,
                 channelId: linesChannel.id,
-                hiddenChannels: hiddenChannels, // Store which channels were hidden
-                lineStartTime: Date.now() // Track when this line started
+                hiddenChannels: [], // No channels hidden in lite version
+                lineStartTime: Date.now()
             });
 
             // Create image of the line
